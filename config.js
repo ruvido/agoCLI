@@ -1,5 +1,6 @@
 const path = require('path')
 const config = {
+  dbExtension: '.yml',
   store:  'store',
   weddings: {
     store: '',
