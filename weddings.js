@@ -3,6 +3,7 @@ const config = require("./config.js")
 const csv = require('csv')
 const yaml = require('js-yaml')
 const fs = require('fs')
+const mkdirp = require('mkdirp')
 
 function objToFileName (obj) {
   let fileName = obj.date+'-'+obj.groom+'-e-'+obj.bride
@@ -36,7 +37,8 @@ module.exports = {
       // let fileName = eventDate+'-'+groom+'-e-'+bride+'.yml'
       let folderName = path.join(config.weddings.store, year)
       if (!fs.existsSync(folderName)){
-        fs.mkdirSync(folderName)
+        // fs.mkdirSync(folderName)
+        mkdirp.sync(folderName)
       }
       let obj = {
         date: eventDate,
@@ -71,42 +73,44 @@ module.exports = {
 
   edit: function (id) {
     let year = id.split('-')[0]
-    let fileName = path.join(config.weddings.store, year, id+config.dbExtension)
+    let completeFolder = path.join(config.weddings.store, year)
+    let completeFileName = path.join(completeFolder, id+config.dbExtension)
     let editor = process.env.EDITOR || 'nano'
     const { spawn } = require('child_process')
-    let obj = yaml.safeLoad(fs.readFileSync(fileName, 'utf8'))
-    if (typeof obj === "undefined") {
-      let obj = fileNameToObj(fileName)
-      let yml = yaml.safeDump(obj)
-      fs.writeFileSync(fileName, yml)
+    if (!fs.existsSync(completeFolder)){
+      mkdirp.sync(completeFolder)
     }
-    // process.exit()
-    var child = spawn(editor, [fileName], {
+    if (!fs.existsSync(completeFileName)){
+      let obj = fileNameToObj(completeFileName)
+      let yml = yaml.safeDump(obj)
+      fs.writeFileSync(completeFileName, yml)
+    }
+    var child = spawn(editor, [completeFileName], {
       stdio: 'inherit'
     })
     child.on('exit', function (e, code) {
       try {
-        var obj = yaml.safeLoad(fs.readFileSync(fileName, 'utf8'))
-        if (typeof obj === "undefined") {
-          obj = fileNameToObj(fileName)
-          console.log(obj)
+        var obj = yaml.safeLoad(fs.readFileSync(completeFileName, 'utf8'))
+        correctId = objToFileName(obj)
+        if ( correctId === id ) {
+          console.log(completeFileName+' updated')
         } else {
-          console.log(obj);
-          correctId = objToFileName(obj)
-          if ( correctId === id ) {
-            console.log(fileName+' updated')
-          } else {
-            let correctFileName = path.join(config.weddings.store, year, correctId+config.dbExtension)
-            fs.rename(fileName, correctFileName, function(err) {
-              if ( err ) {
-                console.log('caz')
-                console.log(correctId)
-                console.log(err)
-              } else {
-                console.log(correctFileName+' new name')
-              }
+          let correctFolder = path.join(config.weddings.store, obj.date.split('-')[0])
+          if (!fs.existsSync(correctFolder)){
+            mkdirp.sync(correctFolder, function (err) {
+              if (err) console.error(err)
             })
           }
+          let correctFileName = path.join(correctFolder, correctId+config.dbExtension)
+          fs.rename(completeFileName, correctFileName, function(err) {
+            if ( err ) {
+              console.log('ERROR: rename')
+              console.log(correctId)
+              console.log(err)
+            } else {
+              console.log(correctFileName+' new name')
+            }
+          })
         }
       } catch (e) {
           console.log(e)
