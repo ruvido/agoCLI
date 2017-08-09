@@ -116,5 +116,9 @@ module.exports = {
           console.log(e)
       }
     })
+  },
+  delete: function (id) {
+    console.log('MISSING')
+    console.log(id+' deleted')
   }
 }
