@@ -4,7 +4,16 @@ const config = {
   store:  'store',
   weddings: {
     store: '',
-    folder: 'weddings'
+    folder: 'weddings',
+    defaults: {
+      date: '',
+      groom: '',
+      bride: '',
+      status: '',
+      staff: [],
+      packages: [],
+      payments: []
+    }
   },
   hello: function () {
     console.log('hello')

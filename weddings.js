@@ -1,15 +1,17 @@
 const path = require('path')
 const config = require("./config.js")
+const agoYaml = require("./agoYaml.js")
 const csv = require('csv')
 const yaml = require('js-yaml')
 const fs = require('fs')
 const mkdirp = require('mkdirp')
 
-function objToFileName (obj) {
-  let fileName = obj.date+'-'+obj.groom+'-e-'+obj.bride
-  return fileName
-}
+// function objToFileName (obj) {
+//   let fileName = obj.date+'-'+obj.groom+'-e-'+obj.bride
+//   return fileName
+// }
 
+// function fileNameToObjDefault(fileName) {
 function fileNameToObj(fileName) {
   let objValues = path.basename(fileName, config.dbExtension).split('-')
   let year = objValues[0]
@@ -40,13 +42,13 @@ module.exports = {
         // fs.mkdirSync(folderName)
         mkdirp.sync(folderName)
       }
-      let obj = {
-        date: eventDate,
-        groom: groom,
-        bride: bride
-      }
+      obj = config.weddings.defaults
+      obj.date = eventDate
+      obj.groom = groom
+      obj.bride = bride
       let yml = yaml.dump(obj)
-      let completeFileName = path.join(folderName, objToFileName(obj)+config.dbExtension)
+      // let completeFileName = path.join(folderName, objToFileName(obj)+config.dbExtension)
+      let completeFileName = path.join(folderName, agoYaml.objToId(obj)+config.dbExtension)
       if (!fs.existsSync(completeFileName)){
         fs.writeFile(completeFileName, yml, (err) => {
         // '---\n'+yml+'---\n', (err) => {
@@ -81,7 +83,7 @@ module.exports = {
       mkdirp.sync(completeFolder)
     }
     if (!fs.existsSync(completeFileName)){
-      let obj = fileNameToObj(completeFileName)
+      let obj = agoYaml.newObjFromId(completeFileName)
       let yml = yaml.safeDump(obj)
       fs.writeFileSync(completeFileName, yml)
     }
@@ -91,7 +93,8 @@ module.exports = {
     child.on('exit', function (e, code) {
       try {
         var obj = yaml.safeLoad(fs.readFileSync(completeFileName, 'utf8'))
-        correctId = objToFileName(obj)
+        // correctId = objToFileName(obj)
+        correctId = agoYaml.objToId(obj)
         if ( correctId === id ) {
           console.log(completeFileName+' updated')
         } else {
@@ -120,5 +123,40 @@ module.exports = {
   delete: function (id) {
     console.log('MISSING')
     console.log(id+' deleted')
+  },
+  status: function (status) {
+    console.log(status);
+    fs.readdir(path.join(config.weddings.store), (err, years) => {
+      if (err) {
+        console.log('No weddings for this year')
+      } else {
+        years.forEach(year => {
+          fs.readdir(path.join(config.weddings.store, year), (err, events) => {
+            if (err) console.log(err)
+            else {
+              // console.log(events)
+              events.forEach(id => {
+                let obj = agoYaml.objFromFilename(id)
+                if (obj.status === status) {
+                  console.log(agoYaml.objToId(obj))
+                } else if (obj.status === undefined && status === '') {
+                  console.log(agoYaml.objToId(obj))
+                }
+              })
+            }
+          })
+          // console.log(path.basename(file, config.dbExtension))
+        })
+      }
+    })
+
+  },
+  stat: function (id) {
+    let obj = agoYaml.objFromFilename(id)
+    console.log('')
+    totalPackages = agoYaml.arrayStat(obj.packages)
+    totalPay      = agoYaml.arrayStat(obj.payments)
+    console.log(totalPackages-totalPay+'\t'+'DIFFERENZA')
+    console.log('')
   }
 }

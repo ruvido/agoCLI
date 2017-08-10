@@ -1,3 +1,14 @@
 date: '2017-05-01'
 groom: Astrubale
 bride: Arcibugia
+#---------------
+status: rating
+#---------------
+packages:
+  - [1300, foto]
+  - [ 300, fotolibro]
+#---------------
+payments:
+  - [ 200, bcc, '2017-05-01']
+  - [ 100, evo, '2017-01-01']
+  - [1250, evo, '2017-10-01']

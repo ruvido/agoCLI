@@ -9,6 +9,7 @@ app
   .option('-w, --weddings [year]', 'list of weddings in simple format')
   .option('-e, --edit [weddingID]', 'edit wedding details')
   .option('-d, --delete [weddingID]', 'delete wedding event')
+  .option('-s, --status [status]', 'list weddings by status [rating, color, review, book, print, devlivery, done]')
   .parse(process.argv)
 
 if (app.import) {
@@ -19,6 +20,16 @@ if (app.import) {
   wed.edit(app.edit)
 } else if (app.delete) {
   wed.delete(app.delete)
+} else if (app.status) {
+  if (app.status === 'undefined') {
+    app.status = ''
+  }
+  wed.status(app.status)
 } else {
-  console.log('default action')
+  if (process.argv.length > 2) {
+    wed.stat(process.argv[2])
+  } else {
+    let thisYear = '2017'
+    wed.show(thisYear)
+  }
 }
